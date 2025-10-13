@@ -23,6 +23,10 @@ void tef6686_set_mode(rx_mode_t rx_mode);
 
 void tef6686_set_fm_deemphasis(fm_deemphasis_t deemphasis);
 
+void tef6686_set_mono(void);
+
+void tef6686_set_stereo(void);
+
 void tef6686_set_softmute(uint8_t enable, uint16_t attenuation);
 
 void tef6686_set_mute(uint8_t enable);

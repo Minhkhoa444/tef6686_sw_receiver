@@ -5,6 +5,7 @@ static const uint8_t lcd_addr = 0x27 << 1;
 static rx_mode_t rx_mode = FM_MODE;
 static uint16_t input_freq = 0;
 static uint16_t freq = 9400;
+static uint8_t is_mono = 0;
 
 typedef enum state_t {
     DISPLAY_MODE,
@@ -21,6 +22,13 @@ static void fm_radio_display_update(void) {
     lcd_print(buffer);
     lcd_goto(0, 1);
     lcd_print("FM MODE");
+    lcd_goto(9, 1);
+    if(is_mono) {
+        lcd_print("MONO");
+    }
+    else {
+        lcd_print("STEREO");
+    }
 }
 
 static void am_radio_display_update(void) {
@@ -61,6 +69,7 @@ void tasks_init(I2C_HandleTypeDef *radio_I2Cx, I2C_HandleTypeDef *lcd_I2Cx, GPIO
     tef6686_set_fm_deemphasis(FM_DEEMPHASIS_50);
     tef6686_set_freq(freq);
     tef6686_set_mute(0);
+    tef6686_set_stereo();
     HAL_Delay(43);
     rx_mode = FM_MODE;
     current_state = DISPLAY_MODE;
@@ -83,6 +92,7 @@ void fsm_task(void *pvParameters) {
                     if(rx_mode == FM_MODE) {
                         tef6686_set_mode(AM_MODE);
                         tef6686_set_freq(610);
+                        tef6686_set_softmute(0, 0);
                         freq = 610;
                         rx_mode = AM_MODE;
                         am_radio_display_update();
@@ -92,6 +102,19 @@ void fsm_task(void *pvParameters) {
                         tef6686_set_freq(9400);
                         freq = 9400;
                         rx_mode = FM_MODE;
+                        fm_radio_display_update();
+                    }
+                }
+                else if(key == 'B') {
+                    if(rx_mode == FM_MODE) {
+                        if(is_mono) {
+                            tef6686_set_stereo();
+                            is_mono = 0;
+                        }
+                        else {
+                            tef6686_set_mono();
+                            is_mono = 1;
+                        }
                         fm_radio_display_update();
                     }
                 }

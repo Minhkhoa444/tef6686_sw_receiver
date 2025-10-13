@@ -177,7 +177,7 @@ void tef6686_init(I2C_HandleTypeDef *I2Cx, uint8_t addr) {
     dev_addr = addr;
     i2c_handle = *I2Cx;
     tef6686_power_up();
-    uint8_t cmd[5];
+    uint8_t cmd[9];
     cmd[0] = FM_RADIO;
     cmd[1] = Set_MphSuppression;
     cmd[2] = 0x01;
@@ -190,6 +190,16 @@ void tef6686_init(I2C_HandleTypeDef *I2Cx, uint8_t addr) {
     cmd[3] = 0x00;
     cmd[4] = 0x01;
     i2c_write(&i2c_handle, dev_addr, cmd, 5);
+    cmd[0] = AM_RADIO;
+    cmd[1] = Set_HighCut_Level;
+    cmd[2] = 0x01;
+    cmd[3] = 0x00;
+    cmd[4] = 0x02;
+    cmd[5] = 0x01;
+    cmd[6] = 0xD6;
+    cmd[7] = 0x00;
+    cmd[8] = 0xC8;
+    i2c_write(&i2c_handle, dev_addr, cmd, 9);
 }
 
 void tef6686_set_mode(rx_mode_t rx_mode) {
@@ -210,6 +220,30 @@ void tef6686_set_fm_deemphasis(fm_deemphasis_t deemphasis) {
         cmd[4] = 0xF4;
     }
     i2c_write(&i2c_handle, dev_addr, cmd, 5);
+}
+
+void tef6686_set_mono(void) {
+    uint8_t cmd[7];
+    cmd[0] = FM_RADIO;
+    cmd[1] = Set_Stereo_Min;
+    cmd[2] = 0x01;
+    cmd[3] = 0x00;
+    cmd[4] = 0x02;
+    cmd[5] = 0x01;
+    cmd[6] = 0x90;
+    i2c_write(&i2c_handle, dev_addr, cmd, 7);
+}
+
+void tef6686_set_stereo(void) {
+    uint8_t cmd[7];
+    cmd[0] = FM_RADIO;
+    cmd[1] = Set_Stereo_Min;
+    cmd[2] = 0x01;
+    cmd[3] = 0x00;
+    cmd[4] = 0x00;
+    cmd[5] = 0x01;
+    cmd[6] = 0x90;
+    i2c_write(&i2c_handle, dev_addr, cmd, 7);
 }
 
 void tef6686_set_softmute(uint8_t enable, uint16_t attenuation) {
