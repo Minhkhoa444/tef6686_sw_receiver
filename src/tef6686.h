@@ -31,9 +31,11 @@ void tef6686_set_softmute(uint8_t enable, uint16_t attenuation);
 
 void tef6686_set_mute(uint8_t enable);
 
+void tef6686_set_volume(int16_t gain);
+
 void tef6686_set_freq(uint16_t rx_freq);
 
-void tef6686_get_signal_quality(int16_t *rssi, int16_t *snr);
+void tef6686_get_signal_quality(int16_t *rssi, uint16_t *usn, uint16_t *wam, int16_t *offset);
 
 uint8_t tef6686_get_fm_stereo(void);
 

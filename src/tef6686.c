@@ -177,19 +177,107 @@ void tef6686_init(I2C_HandleTypeDef *I2Cx, uint8_t addr) {
     dev_addr = addr;
     i2c_handle = *I2Cx;
     tef6686_power_up();
-    uint8_t cmd[9];
-    cmd[0] = FM_RADIO;
-    cmd[1] = Set_MphSuppression;
-    cmd[2] = 0x01;
-    cmd[3] = 0x00;
-    cmd[4] = 0x01;
-    i2c_write(&i2c_handle, dev_addr, cmd, 5);
+    uint8_t cmd[11];
     cmd[0] = FM_RADIO;
     cmd[1] = Set_ChannelEqualizer;
     cmd[2] = 0x01;
     cmd[3] = 0x00;
     cmd[4] = 0x01;
     i2c_write(&i2c_handle, dev_addr, cmd, 5);
+    cmd[0] = FM_RADIO;
+    cmd[1] = Set_SoftMute_Time;
+    cmd[2] = 0x01;
+    cmd[3] = 0x00;
+    cmd[4] = 0x78;
+    cmd[5] = 0x01;
+    cmd[6] = 0xF4;
+    cmd[7] = 0x00;
+    cmd[8] = 0x0A;
+    cmd[9] = 0x00;
+    cmd[10] = 0x14;
+    i2c_write(&i2c_handle, dev_addr, cmd, 11);
+    cmd[0] = FM_RADIO;
+    cmd[1] = Set_HighCut_Time;
+    cmd[2] = 0x01;
+    cmd[3] = 0x00;
+    cmd[4] = 0xC8;
+    cmd[5] = 0x01;
+    cmd[6] = 0xF4;
+    cmd[7] = 0x00;
+    cmd[8] = 0x0A;
+    cmd[9] = 0x00;
+    cmd[10] = 0x50;
+    i2c_write(&i2c_handle, dev_addr, cmd, 11);
+    cmd[0] = FM_RADIO;
+    cmd[1] = Set_HighCut_Noise;
+    cmd[2] = 0x01;
+    cmd[3] = 0x00;
+    cmd[4] = 0x03;
+    cmd[5] = 0x00;
+    cmd[6] = 0x96;
+    cmd[7] = 0x00;
+    cmd[8] = 0xC8;
+    i2c_write(&i2c_handle, dev_addr, cmd, 9);
+    cmd[0] = FM_RADIO;
+    cmd[1] = Set_HighCut_Mph;
+    cmd[2] = 0x01;
+    cmd[3] = 0x00;
+    cmd[4] = 0x03;
+    cmd[5] = 0x00;
+    cmd[6] = 0x78;
+    cmd[7] = 0x00;
+    cmd[8] = 0xA0;
+    i2c_write(&i2c_handle, dev_addr, cmd, 9);
+    cmd[0] = FM_RADIO;
+    cmd[1] = Set_HighCut_Max;
+    cmd[2] = 0x01;
+    cmd[3] = 0x00;
+    cmd[4] = 0x01;
+    cmd[5] = 0x09;
+    cmd[6] = 0x60;
+    i2c_write(&i2c_handle, dev_addr, cmd, 7);
+    cmd[0] = FM_RADIO;
+    cmd[1] = Set_LowCut_Max;
+    cmd[2] = 0x01;
+    cmd[3] = 0x00;
+    cmd[4] = 0x01;
+    cmd[5] = 0x00;
+    cmd[6] = 0x64;
+    i2c_write(&i2c_handle, dev_addr, cmd, 7);
+    cmd[0] = FM_RADIO;
+    cmd[1] = Set_Stereo_Time;
+    cmd[2] = 0x01;
+    cmd[3] = 0x00;
+    cmd[4] = 0xC8;
+    cmd[5] = 0x0F;
+    cmd[6] = 0xA0;
+    cmd[7] = 0x00;
+    cmd[8] = 0x14;
+    cmd[9] = 0x00;
+    cmd[10] = 0x50;
+    i2c_write(&i2c_handle, dev_addr, cmd, 11);
+    cmd[0] = FM_RADIO;
+    cmd[1] = Set_Stereo_Noise;
+    cmd[2] = 0x01;
+    cmd[3] = 0x00;
+    cmd[4] = 0x03;
+    cmd[5] = 0x00;
+    cmd[6] = 0x78;
+    cmd[7] = 0x00;
+    cmd[8] = 0xA0;
+    i2c_write(&i2c_handle, dev_addr, cmd, 9);
+    cmd[0] = FM_RADIO;
+    cmd[1] = Set_Stereo_Mph;
+    cmd[2] = 0x01;
+    cmd[3] = 0x00;
+    cmd[4] = 0x03;
+    cmd[5] = 0x00;
+    cmd[6] = 0x64;
+    cmd[7] = 0x00;
+    cmd[8] = 0x96;
+    i2c_write(&i2c_handle, dev_addr, cmd, 9);
+    //cmd[1] = Set_StHiBlend_Noise;
+    //cmd[1] = Set_StHiBlend_Mph;
     cmd[0] = AM_RADIO;
     cmd[1] = Set_HighCut_Level;
     cmd[2] = 0x01;
@@ -273,6 +361,17 @@ void tef6686_set_mute(uint8_t enable) {
     i2c_write(&i2c_handle, dev_addr, cmd, 5);
 }
 
+void tef6686_set_volume(int16_t gain) {
+    gain *= 10;
+    uint8_t cmd[5];
+    cmd[0] = AUDIO;
+    cmd[1] = Set_Volume;
+    cmd[2] = 0x01;
+    cmd[3] = gain >> 8;
+    cmd[4] = gain;
+    i2c_write(&i2c_handle, dev_addr, cmd, 5);
+}
+
 void tef6686_set_freq(uint16_t rx_freq) {
     uint8_t cmd[7];
     if(current_rx_mode == FM_MODE) {
@@ -290,11 +389,13 @@ void tef6686_set_freq(uint16_t rx_freq) {
     i2c_write(&i2c_handle, dev_addr, cmd, 7);
 }
 
-void tef6686_get_signal_quality(int16_t *rssi, int16_t *snr) {
+void tef6686_get_signal_quality(int16_t *rssi, uint16_t *usn, uint16_t *wam, int16_t *offset) {
     uint8_t cmd[3];
     uint8_t rec[14];
     int16_t level;
     uint16_t usn_noise;
+    uint16_t wam_raw;
+    int16_t offset_raw;
     if(current_rx_mode == FM_MODE) {
         cmd[0] = FM_RADIO;
     }
@@ -307,13 +408,15 @@ void tef6686_get_signal_quality(int16_t *rssi, int16_t *snr) {
     i2c_read(&i2c_handle, dev_addr, rec, 14);
     level = (uint16_t)rec[2] << 8 | rec[3];
     usn_noise = (uint16_t)rec[4] << 8 | rec[5];
-    *rssi = (double)level / 10.0;
-    if(current_rx_mode == FM_MODE) {
-        *snr = (int16_t)(0.46222375 * (double)(level) / 10.0 - 0.082495118 * (double)(usn_noise) / 10.0) + 10;
+    wam_raw = (uint16_t)rec[6] << 8 | rec[7];
+    offset_raw = (uint16_t)rec[8] << 8 | rec[9];
+    if(offset_raw < 0) {
+        offset_raw = -offset_raw;
     }
-    else if(current_rx_mode == AM_MODE) {
-        *snr = (int16_t)(0.46222375 * (double)(level) / 10.0 - 0.082495118 * (double)(usn_noise / 50.0) / 10.0) + 10;
-    }
+    *rssi = level / 10;
+    *usn = usn_noise / 10;
+    *wam = wam_raw / 10;
+    *offset = offset_raw / 10;
 }
 
 uint8_t tef6686_get_fm_stereo(void) {
