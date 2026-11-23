@@ -177,15 +177,15 @@ void tef6686_init(I2C_HandleTypeDef *I2Cx, uint8_t addr) {
     dev_addr = addr;
     i2c_handle = I2Cx;
     uint8_t cmd[11];
-    uint8_t rec[2];
-    cmd[0] = APPL;
-    cmd[1] = Get_Operation_Status;
-    cmd[2] = 0x01;
-    i2c_write(i2c_handle, dev_addr, cmd, 3);
-    i2c_read(i2c_handle, dev_addr, rec, 2);
-    if(rec[1] != 0x00 && rec[1] != 0x01) {
-        return; //  Radio already powered up
-    }
+    //uint8_t rec[2];
+    //cmd[0] = APPL;
+    //cmd[1] = Get_Operation_Status;
+    //cmd[2] = 0x01;
+    //i2c_write(i2c_handle, dev_addr, cmd, 3);
+    //i2c_read(i2c_handle, dev_addr, rec, 2);
+    //if(rec[1] != 0x00 && rec[1] != 0x01) {
+    //    return; //  Radio already powered up
+    //}
     tef6686_power_up();
     cmd[0] = FM_RADIO;
     cmd[1] = Set_ChannelEqualizer;
