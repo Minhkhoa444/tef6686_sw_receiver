@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 #include "stm32f4xx_hal.h"
+#include "FreeRTOS.h"
+#include "task.h"
 #include "i2c_wrapper.h"
 
 void lcd_init(I2C_HandleTypeDef *I2Cx, uint8_t dev_addr);

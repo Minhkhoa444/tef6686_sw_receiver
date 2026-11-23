@@ -7,6 +7,7 @@
 #define TASK_STACK_SIZE (configMINIMAL_STACK_SIZE)
 
 TaskHandle_t fsm_task_handle = NULL;
+TaskHandle_t keypad_task_handle = NULL;
 
 void Error_Handler(void) {
     while(1) {
@@ -62,6 +63,15 @@ int main(void) {
     MX_I2C3_Init();
 
     tasks_init(&hi2c1, &hi2c3, ports_list, pins_list);
+
+    xTaskCreate(
+        keypad_task,
+        "keypad_task",
+        TASK_STACK_SIZE,
+        NULL,
+        tskIDLE_PRIORITY + 2,
+        &keypad_task_handle
+    );
 
     xTaskCreate(
         fsm_task,
