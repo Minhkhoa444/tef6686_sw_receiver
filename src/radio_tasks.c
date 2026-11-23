@@ -28,6 +28,7 @@ QueueHandle_t keypad_queue;
 static void fm_radio_display_update(void) {
     char buffer[20];
     lcd_clear();
+    vTaskDelay(pdMS_TO_TICKS(2));
     lcd_goto(0, 0);
     sprintf(buffer, "%u.%u MHz", freq / 100, freq % 100);
     lcd_print(buffer);
@@ -45,6 +46,7 @@ static void fm_radio_display_update(void) {
 static void am_radio_display_update(void) {
     char buffer[20];
     lcd_clear();
+    vTaskDelay(pdMS_TO_TICKS(2));
     lcd_goto(0, 0);
     sprintf(buffer, "%u kHz", freq);
     lcd_print(buffer);
@@ -55,6 +57,7 @@ static void am_radio_display_update(void) {
 static void scan_mode_display_update() {
     char buffer[20];
     lcd_clear();
+    vTaskDelay(pdMS_TO_TICKS(2));
     lcd_goto(0, 0);
     sprintf(buffer, "IDX %u/%u", scan_mem_idx + 1, scan_stations_found);
     lcd_print(buffer);
@@ -117,6 +120,7 @@ static void fm_scan(void) {
 static void display_mode(char key) {
     if(key >= '0' && key <= '9') {
         lcd_clear();
+        vTaskDelay(pdMS_TO_TICKS(2));
         lcd_goto(0, 0);
         lcd_print_char(key);
         input_freq = (uint16_t )key - '0';
@@ -218,10 +222,12 @@ static void scan_mode(char key) {
     }
     else if(key == 'A') {   //      Start scan
         lcd_clear();
+        vTaskDelay(pdMS_TO_TICKS(2));
         lcd_goto(0, 0);
         lcd_print("Scanning...");
         fm_scan();
         lcd_clear();
+        vTaskDelay(pdMS_TO_TICKS(2));
         lcd_goto(0, 0);
         lcd_print("Scan finished");
         scan_mem_idx = 0;

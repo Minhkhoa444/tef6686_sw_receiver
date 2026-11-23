@@ -47,7 +47,6 @@ void lcd_init(I2C_HandleTypeDef *I2Cx, uint8_t addr) {
 
 void lcd_clear(void) {
     lcd_send_cmd(0x01);
-    vTaskDelay(pdMS_TO_TICKS(2));
 }
 
 void lcd_goto(uint8_t x, uint8_t y) {
