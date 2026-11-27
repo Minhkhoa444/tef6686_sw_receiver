@@ -23,7 +23,7 @@ typedef enum state_t {
 
 static state_t current_state = DISPLAY_MODE;
 
-QueueHandle_t keypad_queue;
+QueueHandle_t keypad_queue = NULL;
 
 static void fm_radio_display_update(void) {
     char buffer[20];
@@ -54,7 +54,7 @@ static void am_radio_display_update(void) {
     lcd_print("AM MODE");
 }
 
-static void scan_mode_display_update() {
+static void scan_mode_display_update(void) {
     char buffer[20];
     lcd_clear();
     vTaskDelay(pdMS_TO_TICKS(2));
@@ -117,7 +117,7 @@ static void fm_scan(void) {
     }
 }
 
-static void display_mode(char key) {
+static void display_mode(const char key) {
     if(key >= '0' && key <= '9') {
         lcd_clear();
         vTaskDelay(pdMS_TO_TICKS(2));
@@ -165,7 +165,7 @@ static void display_mode(char key) {
     }
 }
 
-static void input_mode(char key) {
+static void input_mode(const char key) {
     if(key >= '0' && key <= '9') {
         lcd_print_char(key);
         uint16_t temp = (uint16_t )key - '0';
@@ -195,10 +195,10 @@ static void input_mode(char key) {
     }
 }
 
-static void scan_mode(char key) {
+static void scan_mode(const char key) {
     if(key == 'C') {        //      Next memory location
         if(scan_stations_found > 0) {
-            if(scan_mem_idx + 1< scan_stations_found) {
+            if(scan_mem_idx + 1 < scan_stations_found) {
                 scan_mem_idx += 1;
             }
             else {
@@ -247,6 +247,9 @@ static void scan_mode(char key) {
             freq = scan_freq_list[scan_mem_idx];
             tef6686_set_freq(freq);
         }
+        else {
+            tef6686_set_freq(freq);
+        }
         fm_radio_display_update();
         current_state = DISPLAY_MODE;
     }
@@ -274,7 +277,8 @@ void tasks_init(I2C_HandleTypeDef *radio_I2Cx, I2C_HandleTypeDef *lcd_I2Cx, GPIO
     rx_mode = FM_MODE;
     current_state = DISPLAY_MODE;
     lcd_init(lcd_I2Cx, lcd_addr);
-    fm_radio_display_update();
+    lcd_clear();
+    HAL_Delay(2);
 }
 
 void keypad_task(void *pvParameters) {
@@ -290,9 +294,10 @@ void keypad_task(void *pvParameters) {
 }
 
 void fsm_task(void *pvParameters) {
+    fm_radio_display_update();
     char key = '\0';
     while(1) {
-        if(xQueueReceive(keypad_queue, &key, portMAX_DELAY) == pdPASS) {
+        if(xQueueReceive(keypad_queue, &key, 0) == pdPASS) {
             switch(current_state) {
                 case DISPLAY_MODE:
                     display_mode(key);
@@ -307,5 +312,6 @@ void fsm_task(void *pvParameters) {
                     break;
             }
         }
+        vTaskDelay(pdMS_TO_TICKS(10));
     }
 }

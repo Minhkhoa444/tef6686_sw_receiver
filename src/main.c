@@ -4,7 +4,7 @@
 #include "gpio.h"
 #include "lcd.h"
 
-#define TASK_STACK_SIZE (configMINIMAL_STACK_SIZE)
+#define TASK_STACK_SIZE (512)
 
 TaskHandle_t fsm_task_handle = NULL;
 TaskHandle_t keypad_task_handle = NULL;
@@ -85,6 +85,11 @@ int main(void) {
     vTaskStartScheduler();
 
     while(1) {
+        // Free RTOS failure
+        // In normal freeRTOS use case, this while(1)
+        // loop should not run at all
+        HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
+        HAL_Delay(5000);
     }
     return 0;
 }
