@@ -6,7 +6,7 @@ static rx_mode_t rx_mode = FM_MODE;
 static uint16_t input_freq = 0;
 static uint16_t fm_freq = 9100;
 static uint16_t am_freq = 610;
-static uint8_t is_mono = 0;
+static uint8_t is_mono = 1;
 static uint16_t scan_freq_list[211];
 static uint8_t scan_mem_idx = 0;
 static uint8_t scan_stations_found = 0;
@@ -276,7 +276,8 @@ void tasks_init(I2C_HandleTypeDef *radio_I2Cx, I2C_HandleTypeDef *lcd_I2Cx, GPIO
     tef6686_set_fm_deemphasis(FM_DEEMPHASIS_50);
     tef6686_set_freq(fm_freq);
     tef6686_set_mute(0);
-    tef6686_set_stereo();
+    tef6686_set_mono();
+    is_mono = 1;
     for(uint8_t i = 0; i < 211; i = i + 1) {
         scan_freq_list[i] = 0;
     }
