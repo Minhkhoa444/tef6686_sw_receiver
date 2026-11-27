@@ -28,7 +28,7 @@ QueueHandle_t keypad_queue = NULL;
 static void fm_radio_display_update(void) {
     char buffer[20];
     lcd_clear();
-    vTaskDelay(pdMS_TO_TICKS(2));
+    vTaskDelay(pdMS_TO_TICKS(3));
     lcd_goto(0, 0);
     sprintf(buffer, "%u.%u MHz", freq / 100, freq % 100);
     lcd_print(buffer);
@@ -46,7 +46,7 @@ static void fm_radio_display_update(void) {
 static void am_radio_display_update(void) {
     char buffer[20];
     lcd_clear();
-    vTaskDelay(pdMS_TO_TICKS(2));
+    vTaskDelay(pdMS_TO_TICKS(3));
     lcd_goto(0, 0);
     sprintf(buffer, "%u kHz", freq);
     lcd_print(buffer);
@@ -57,7 +57,7 @@ static void am_radio_display_update(void) {
 static void scan_mode_display_update(void) {
     char buffer[20];
     lcd_clear();
-    vTaskDelay(pdMS_TO_TICKS(2));
+    vTaskDelay(pdMS_TO_TICKS(3));
     lcd_goto(0, 0);
     if(scan_stations_found == 0) {
         lcd_print("IDX 0/0");
@@ -125,7 +125,7 @@ static void fm_scan(void) {
 static void display_mode(const char key) {
     if(key >= '0' && key <= '9') {
         lcd_clear();
-        vTaskDelay(pdMS_TO_TICKS(2));
+        vTaskDelay(pdMS_TO_TICKS(3));
         lcd_goto(0, 0);
         lcd_print_char(key);
         input_freq = (uint16_t )key - '0';
@@ -140,33 +140,32 @@ static void display_mode(const char key) {
     }
     else if(key == 'A') {
         if(rx_mode == FM_MODE) {
-            freq = 610;
-            rx_mode = AM_MODE;
-            am_radio_display_update();
             tef6686_set_mode(AM_MODE);
             tef6686_set_freq(610);
             tef6686_set_softmute(0, 0);
+            freq = 610;
+            rx_mode = AM_MODE;
+            am_radio_display_update();
         }
         else if(rx_mode == AM_MODE) {
+            tef6686_set_mode(FM_MODE);
+            tef6686_set_freq(9100);
             freq = 9100;
             rx_mode = FM_MODE;
             fm_radio_display_update();
-            tef6686_set_mode(FM_MODE);
-            tef6686_set_freq(9100);
         }
     }
     else if(key == 'B') {
         if(rx_mode == FM_MODE) {
             if(is_mono) {
-                is_mono = 0;
-                fm_radio_display_update();
                 tef6686_set_stereo();
+                is_mono = 0;
             }
             else {
-                is_mono = 1;
-                fm_radio_display_update();
                 tef6686_set_mono();
+                is_mono = 1;
             }
+            fm_radio_display_update();
         }
     }
 }
@@ -190,6 +189,7 @@ static void input_mode(const char key) {
         else if(rx_mode == AM_MODE && !is_in_am_range()) {
             freq = 610;
         }
+        tef6686_set_freq(freq);
         current_state = DISPLAY_MODE;
         if(rx_mode == FM_MODE) {
             fm_radio_display_update();
@@ -197,7 +197,6 @@ static void input_mode(const char key) {
         else if(rx_mode == AM_MODE) {
             am_radio_display_update();
         }
-        tef6686_set_freq(freq);
     }
 }
 
@@ -228,12 +227,12 @@ static void scan_mode(const char key) {
     }
     else if(key == 'A') {   //      Start scan
         lcd_clear();
-        vTaskDelay(pdMS_TO_TICKS(2));
+        vTaskDelay(pdMS_TO_TICKS(3));
         lcd_goto(0, 0);
         lcd_print("Scanning...");
         fm_scan();
         lcd_clear();
-        vTaskDelay(pdMS_TO_TICKS(2));
+        vTaskDelay(pdMS_TO_TICKS(3));
         lcd_goto(0, 0);
         lcd_print("Scan finished");
         scan_mem_idx = 0;
@@ -260,8 +259,8 @@ static void scan_mode(const char key) {
         current_state = DISPLAY_MODE;
     }
     else if(key == '*') {   //      Exit scan mode
-        freq = 9100;
         tef6686_set_freq(9100);
+        freq = 9100;
         fm_radio_display_update();
         current_state = DISPLAY_MODE;
     }
@@ -284,7 +283,7 @@ void tasks_init(I2C_HandleTypeDef *radio_I2Cx, I2C_HandleTypeDef *lcd_I2Cx, GPIO
     current_state = DISPLAY_MODE;
     lcd_init(lcd_I2Cx, lcd_addr);
     lcd_clear();
-    HAL_Delay(2);
+    HAL_Delay(3);
 }
 
 void keypad_task(void *pvParameters) {
@@ -333,6 +332,6 @@ void fsm_task(void *pvParameters) {
                     break;
             }
         }
-        vTaskDelay(pdMS_TO_TICKS(10));
+        vTaskDelay(pdMS_TO_TICKS(50));
     }
 }
