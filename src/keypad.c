@@ -26,7 +26,7 @@ static void set_col(uint8_t col) {
 static char check_row(uint8_t col) {
     for(uint8_t row = 0; row < 4; row += 1) {
         if(!HAL_GPIO_ReadPin(row_ports[row], row_pins[row])) {
-            while(!HAL_GPIO_ReadPin(row_ports[row], row_pins[row]));
+            if(!HAL_GPIO_ReadPin(row_ports[row], row_pins[row]));
             return keypad_button_value[row][col];
         }
     }
@@ -49,13 +49,16 @@ void keypad_init(GPIO_TypeDef **ports, uint16_t *pins) {
 }
 
 char keypad_get(void) {
-    char key;
+    char key = '\0';
     for(uint8_t col = 0; col < 4; col += 1) {
         set_col(col);
         key = check_row(col);
-        if(key) {
-            return key;
+        if(key != '\0') {
+            break;
         }
     }
-    return '\0';
+    for(uint8_t i =0; i < 4; i += 1) {
+        HAL_GPIO_WritePin(col_ports[i], col_pins[i], GPIO_PIN_SET);
+    }
+    return key;
 }

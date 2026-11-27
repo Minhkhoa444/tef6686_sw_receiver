@@ -59,8 +59,13 @@ static void scan_mode_display_update(void) {
     lcd_clear();
     vTaskDelay(pdMS_TO_TICKS(2));
     lcd_goto(0, 0);
-    sprintf(buffer, "IDX %u/%u", scan_mem_idx + 1, scan_stations_found);
-    lcd_print(buffer);
+    if(scan_stations_found == 0) {
+        lcd_print("IDX 0/0");
+    }
+    else {
+        sprintf(buffer, "IDX %u/%u", scan_mem_idx + 1, scan_stations_found);
+        lcd_print(buffer);
+    }
     uint16_t mem_freq = scan_freq_list[scan_mem_idx];
     lcd_goto(0, 1);
     if(mem_freq == 0) {
@@ -135,32 +140,33 @@ static void display_mode(const char key) {
     }
     else if(key == 'A') {
         if(rx_mode == FM_MODE) {
-            tef6686_set_mode(AM_MODE);
-            tef6686_set_freq(610);
-            tef6686_set_softmute(0, 0);
             freq = 610;
             rx_mode = AM_MODE;
             am_radio_display_update();
+            tef6686_set_mode(AM_MODE);
+            tef6686_set_freq(610);
+            tef6686_set_softmute(0, 0);
         }
         else if(rx_mode == AM_MODE) {
-            tef6686_set_mode(FM_MODE);
-            tef6686_set_freq(9100);
             freq = 9100;
             rx_mode = FM_MODE;
             fm_radio_display_update();
+            tef6686_set_mode(FM_MODE);
+            tef6686_set_freq(9100);
         }
     }
     else if(key == 'B') {
         if(rx_mode == FM_MODE) {
             if(is_mono) {
-                tef6686_set_stereo();
                 is_mono = 0;
+                fm_radio_display_update();
+                tef6686_set_stereo();
             }
             else {
-                tef6686_set_mono();
                 is_mono = 1;
+                fm_radio_display_update();
+                tef6686_set_mono();
             }
-            fm_radio_display_update();
         }
     }
 }
@@ -184,7 +190,6 @@ static void input_mode(const char key) {
         else if(rx_mode == AM_MODE && !is_in_am_range()) {
             freq = 610;
         }
-        tef6686_set_freq(freq);
         current_state = DISPLAY_MODE;
         if(rx_mode == FM_MODE) {
             fm_radio_display_update();
@@ -192,6 +197,7 @@ static void input_mode(const char key) {
         else if(rx_mode == AM_MODE) {
             am_radio_display_update();
         }
+        tef6686_set_freq(freq);
     }
 }
 
@@ -283,11 +289,26 @@ void tasks_init(I2C_HandleTypeDef *radio_I2Cx, I2C_HandleTypeDef *lcd_I2Cx, GPIO
 
 void keypad_task(void *pvParameters) {
     TickType_t last_wake_time = xTaskGetTickCount();
-    char key = '\0';
+    char raw_key = '\0';
+    char candidate_key = '\0';
+    char stable_key = '\0';
+    uint8_t debounce_count = 0;
     while(1) {
-        key = keypad_get();
-        if (key != '\0') {
-            xQueueSend(keypad_queue, &key, 0);
+        raw_key = keypad_get();
+        if(raw_key == candidate_key) {
+            if(debounce_count < 4) {
+                debounce_count += 1;
+            }
+        }
+        else {
+            candidate_key = raw_key;
+            debounce_count = 1;
+        }
+        if(debounce_count >= 4 && candidate_key != stable_key) {
+            stable_key = candidate_key;
+            if(stable_key != '\0') {
+                xQueueSend(keypad_queue, &stable_key, 0);
+            }
         }
         vTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(10));        
     }
