@@ -242,9 +242,8 @@ static void scan_mode(const char key) {
         }
         scan_mode_display_update();
         if(scan_interrupted_key != '\0') {
-            char next_key = scan_interrupted_key;
+            // Prevent another process/function when using A, B, C, D, * button
             scan_interrupted_key = '\0';
-            scan_mode(next_key);
         }
     }
     else if(key == 'B') {   //      Set current freq in memory to DISPLAY_MODE
