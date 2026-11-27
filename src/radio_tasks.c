@@ -300,6 +300,7 @@ static void scan_mode(const char key) {
         vTaskDelay(pdMS_TO_TICKS(3));
         lcd_goto(0, 0);
         lcd_print("Scan finished");
+        vTaskDelay(pdMS_TO_TICKS(500));
         scan_mem_idx = 0;
         if(scan_freq_list[0] != 0) {
             fm_freq = scan_freq_list[scan_mem_idx];
