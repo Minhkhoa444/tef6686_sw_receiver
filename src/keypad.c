@@ -26,8 +26,9 @@ static void set_col(uint8_t col) {
 static char check_row(uint8_t col) {
     for(uint8_t row = 0; row < 4; row += 1) {
         if(!HAL_GPIO_ReadPin(row_ports[row], row_pins[row])) {
-            if(!HAL_GPIO_ReadPin(row_ports[row], row_pins[row]));
-            return keypad_button_value[row][col];
+            if(!HAL_GPIO_ReadPin(row_ports[row], row_pins[row])) {
+                return keypad_button_value[row][col];
+            }
         }
     }
     return '\0';

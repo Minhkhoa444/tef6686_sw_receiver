@@ -196,6 +196,7 @@ static void input_mode(const char key) {
             am_freq = freq;
         }
         tef6686_set_freq(freq);
+        input_freq = 0;
         current_state = DISPLAY_MODE;
         if(rx_mode == FM_MODE) {
             fm_radio_display_update();
@@ -255,11 +256,8 @@ static void scan_mode(const char key) {
     else if(key == 'B') {   //      Set current freq in memory to DISPLAY_MODE
         if(scan_stations_found > 0) {
             fm_freq = scan_freq_list[scan_mem_idx];
-            tef6686_set_freq(fm_freq);
         }
-        else {
-            tef6686_set_freq(fm_freq);
-        }
+        tef6686_set_freq(fm_freq);
         fm_radio_display_update();
         current_state = DISPLAY_MODE;
     }
