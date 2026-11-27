@@ -167,6 +167,64 @@ static void display_mode(const char key) {
             fm_radio_display_update();
         }
     }
+    else if(key == 'C') {
+        // Increment frequency
+        if(rx_mode == FM_MODE) {
+            if(fm_freq == 10800) {
+                fm_freq = 6500;
+            }
+            else {
+                fm_freq += 10;  // One press increase the frequency by 100 kHz
+            }
+            tef6686_set_freq(fm_freq);
+            fm_radio_display_update();
+        }
+        else if(rx_mode == AM_MODE) {
+            if(am_freq == 288) {
+                am_freq = 144;
+            }
+            else if(am_freq == 1710) {
+                am_freq = 522;
+            }
+            else if(am_freq == 27000) {
+                am_freq = 2300;
+            }
+            else {
+                am_freq += 1;   // One press increase the frequency by 1 kHz
+            }
+            tef6686_set_freq(am_freq);
+            am_radio_display_update();
+        }
+    }
+    else if(key == 'D') {
+        // Decrement frequency
+        if(rx_mode == FM_MODE) {
+            if(fm_freq == 6500) {
+                fm_freq = 10800;   
+            }
+            else {
+                fm_freq -= 10;  // One press increase the frequency by 100 kHz
+            }
+            tef6686_set_freq(fm_freq);
+            fm_radio_display_update();
+        }
+        else if(rx_mode == AM_MODE) {
+            if(am_freq == 144) {
+                am_freq = 288;
+            }
+            else if(am_freq == 522) {
+                am_freq = 1710;
+            }
+            else if(am_freq == 2300) {
+                am_freq = 27000;
+            }
+            else {
+                am_freq -= 1;   // One press increase the frequency by 1 kHz
+            }
+            tef6686_set_freq(am_freq);
+            am_radio_display_update();
+        }
+    }
 }
 
 static void input_mode(const char key) {
