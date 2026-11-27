@@ -4,7 +4,8 @@ static const uint8_t radio_addr = 0x64 << 1;
 static const uint8_t lcd_addr = 0x27 << 1;
 static rx_mode_t rx_mode = FM_MODE;
 static uint16_t input_freq = 0;
-static uint16_t freq = 9100;
+static uint16_t fm_freq = 9100;
+static uint16_t am_freq = 610;
 static uint8_t is_mono = 0;
 static uint16_t scan_freq_list[211];
 static uint8_t scan_mem_idx = 0;
@@ -30,7 +31,7 @@ static void fm_radio_display_update(void) {
     lcd_clear();
     vTaskDelay(pdMS_TO_TICKS(3));
     lcd_goto(0, 0);
-    sprintf(buffer, "%u.%u MHz", freq / 100, freq % 100);
+    sprintf(buffer, "%u.%u MHz", fm_freq / 100, fm_freq % 100);
     lcd_print(buffer);
     lcd_goto(0, 1);
     lcd_print("FM MODE");
@@ -48,7 +49,7 @@ static void am_radio_display_update(void) {
     lcd_clear();
     vTaskDelay(pdMS_TO_TICKS(3));
     lcd_goto(0, 0);
-    sprintf(buffer, "%u kHz", freq);
+    sprintf(buffer, "%u kHz", am_freq);
     lcd_print(buffer);
     lcd_goto(0, 1);
     lcd_print("AM MODE");
@@ -77,24 +78,24 @@ static void scan_mode_display_update(void) {
     }
 }
 
-static uint8_t is_in_fm_range(void) {
+static uint8_t is_in_fm_range(const uint16_t freq) {
     return (6500 <= freq && freq <= 10800);
 }
 
-static uint8_t is_in_lw_range(void) {
+static uint8_t is_in_lw_range(const uint16_t freq) {
     return (144 <= freq && freq <= 288);
 }
 
-static uint8_t is_in_mw_range(void) {
+static uint8_t is_in_mw_range(const uint16_t freq) {
     return (522 <= freq && freq <= 1710);
 }
 
-static uint8_t is_in_sw_range(void) {
+static uint8_t is_in_sw_range(const uint16_t freq) {
     return (2300 <= freq && freq <= 27000);
 }
 
-static uint8_t is_in_am_range(void) {
-    return is_in_lw_range() || is_in_mw_range() || is_in_sw_range();
+static uint8_t is_in_am_range(const uint16_t freq) {
+    return is_in_lw_range(freq) || is_in_mw_range(freq) || is_in_sw_range(freq);
 }
 
 static void fm_scan(void) {
@@ -141,16 +142,14 @@ static void display_mode(const char key) {
     else if(key == 'A') {
         if(rx_mode == FM_MODE) {
             tef6686_set_mode(AM_MODE);
-            tef6686_set_freq(610);
+            tef6686_set_freq(am_freq);
             tef6686_set_softmute(0, 0);
-            freq = 610;
             rx_mode = AM_MODE;
             am_radio_display_update();
         }
         else if(rx_mode == AM_MODE) {
             tef6686_set_mode(FM_MODE);
-            tef6686_set_freq(9100);
-            freq = 9100;
+            tef6686_set_freq(fm_freq);
             rx_mode = FM_MODE;
             fm_radio_display_update();
         }
@@ -171,6 +170,7 @@ static void display_mode(const char key) {
 }
 
 static void input_mode(const char key) {
+    uint16_t freq = 0;
     if(key >= '0' && key <= '9') {
         lcd_print_char(key);
         uint16_t temp = (uint16_t )key - '0';
@@ -183,11 +183,17 @@ static void input_mode(const char key) {
         else if(rx_mode == AM_MODE) {
             freq = input_freq;
         }
-        if(rx_mode == FM_MODE && !is_in_fm_range()) {
-            freq = 9100;
+        if(rx_mode == FM_MODE && !is_in_fm_range(freq)) {
+            freq = fm_freq;
         }
-        else if(rx_mode == AM_MODE && !is_in_am_range()) {
-            freq = 610;
+        else if(rx_mode == AM_MODE && !is_in_am_range(freq)) {
+            freq = am_freq;
+        }
+        if(rx_mode == FM_MODE) {
+            fm_freq = freq;
+        }
+        else if(rx_mode == AM_MODE) {
+            am_freq = freq;
         }
         tef6686_set_freq(freq);
         current_state = DISPLAY_MODE;
@@ -237,8 +243,8 @@ static void scan_mode(const char key) {
         lcd_print("Scan finished");
         scan_mem_idx = 0;
         if(scan_freq_list[0] != 0) {
-            freq = scan_freq_list[scan_mem_idx];
-            tef6686_set_freq(freq);
+            fm_freq = scan_freq_list[scan_mem_idx];
+            tef6686_set_freq(fm_freq);
         }
         scan_mode_display_update();
         if(scan_interrupted_key != '\0') {
@@ -248,18 +254,17 @@ static void scan_mode(const char key) {
     }
     else if(key == 'B') {   //      Set current freq in memory to DISPLAY_MODE
         if(scan_stations_found > 0) {
-            freq = scan_freq_list[scan_mem_idx];
-            tef6686_set_freq(freq);
+            fm_freq = scan_freq_list[scan_mem_idx];
+            tef6686_set_freq(fm_freq);
         }
         else {
-            tef6686_set_freq(freq);
+            tef6686_set_freq(fm_freq);
         }
         fm_radio_display_update();
         current_state = DISPLAY_MODE;
     }
     else if(key == '*') {   //      Exit scan mode
-        tef6686_set_freq(9100);
-        freq = 9100;
+        tef6686_set_freq(fm_freq);
         fm_radio_display_update();
         current_state = DISPLAY_MODE;
     }
@@ -271,7 +276,7 @@ void tasks_init(I2C_HandleTypeDef *radio_I2Cx, I2C_HandleTypeDef *lcd_I2Cx, GPIO
     tef6686_init(radio_I2Cx, radio_addr);
     tef6686_set_mode(FM_MODE);
     tef6686_set_fm_deemphasis(FM_DEEMPHASIS_50);
-    tef6686_set_freq(freq);
+    tef6686_set_freq(fm_freq);
     tef6686_set_mute(0);
     tef6686_set_stereo();
     for(uint8_t i = 0; i < 211; i = i + 1) {
